@@ -45,16 +45,16 @@ def get_vector_store(text_chunks):
     # supabase: Client = create_client(supabase_url, supabase_key)
 
     embeddings = OpenAIEmbeddings()
-    print(text_chunks)
+    # print(text_chunks)
     # vector_store = SupabaseVectorStore.from_texts(
     #     text_chunks, embeddings, client=supabase
     # )
-    vector_store = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     return vector_store
 
 
 def get_conversation_chain(vector_store):
-    llm = ChatOpenAI(max_tokens=2000)
+    llm = ChatOpenAI(model="gpt-3.5-turbo")
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm, retriever=vector_store.as_retriever(), memory=memory
@@ -98,7 +98,7 @@ def main():
 
     with st.sidebar:
         st.header("Your document")
-        pdf_docs = st.file_uploader("Upload you pdf file", accept_multiple_files=True)
+        pdf_docs = st.file_uploader("Upload you pdf file", accept_multiple_files=True, type=["pdf"])
 
         if st.button("Process"):
             with st.spinner("Processing"):
