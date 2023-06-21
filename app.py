@@ -1,16 +1,18 @@
 # Reference
 # https://www.youtube.com/watch?v=dXxQ0LR-3Hg
-
+import os
 import streamlit as st
+from streamlit_ace import st_ace
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from streamlit_chat import message
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import FAISS, SupabaseVectorStore
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+# from supabase.client import Client, create_client
 
 
 # Instantiate the model. Callbacks support token-wise streaming
@@ -31,22 +33,28 @@ def get_pdf_text(pdf_doc):
 
 def get_text_chunk(raw_texts):
     text_splitter = CharacterTextSplitter(
-        separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
+        separator="\n", chunk_size=2000, chunk_overlap=500, length_function=len
     )
     chunk = text_splitter.split_text(raw_texts)
     return chunk
 
 
 def get_vector_store(text_chunks):
+    # supabase_url = os.environ.get("SUPABASE_URL")
+    # supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+    # supabase: Client = create_client(supabase_url, supabase_key)
+
     embeddings = OpenAIEmbeddings()
+    print(text_chunks)
+    # vector_store = SupabaseVectorStore.from_texts(
+    #     text_chunks, embeddings, client=supabase
+    # )
     vector_store = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
     return vector_store
 
 
 def get_conversation_chain(vector_store):
-    # llm = GPT4All(model="./models/ggml-gpt4all-j-v1.3-groovy.bin", n_ctx=512, n_threads=8)
-    # llm = ChatOpenAI(model="gpt-4")
-    llm = ChatOpenAI()
+    llm = ChatOpenAI(max_tokens=2000)
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm, retriever=vector_store.as_retriever(), memory=memory
@@ -60,17 +68,20 @@ def handle_user_question(user_question):
     # st.write(response)
     st.session_state.chat_history = response["chat_history"]
 
-    for i, chat in enumerate(st.session_state.chat_history):
+    reversed_chat_history = st.session_state.chat_history[::-1]
+
+    for i, chat in enumerate(reversed_chat_history):
         if i % 2 == 0:
-            # User questions
-            message(chat.content, is_user=True)
-        else:
             # Bot response
             message(chat.content, is_user=False)
+        else:
+            # User questions
+            message(chat.content, is_user=True)
 
 
 def main():
     load_dotenv()
+
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:")
 
     if "conversation" not in st.session_state:
@@ -78,6 +89,7 @@ def main():
 
     st.header("Chat with PDF :books:")
     user_question = st.text_input("Ask any question about Java 8")
+    # user_question = st_ace(language="markdown",show_gutter=False, theme="twilight", keybinding="vscode")
 
     if user_question:
         handle_user_question(user_question)
@@ -94,7 +106,6 @@ def main():
                 raw_text = get_pdf_text(pdf_docs)
                 # get text chunks
                 text_chunk = get_text_chunk(raw_texts=raw_text)
-                st.write(text_chunk)
 
                 # create vector store
                 vector_store = get_vector_store(text_chunk)
