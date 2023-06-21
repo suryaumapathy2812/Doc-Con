@@ -6,3 +6,4 @@ streamlit_chat
 langchain
 openai
 faiss-cpu
+tiktoken
