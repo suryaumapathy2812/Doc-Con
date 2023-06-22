@@ -63,20 +63,30 @@ def get_conversation_chain(vector_store):
 
 
 def handle_user_question(user_question):
-    response = st.session_state.conversation({"question": user_question})
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+        
+    # Update the chat history with the user's new question
+    st.session_state.chat_history.append({"role": "system", "content": "You started a new conversation"})
+    st.session_state.chat_history.append({"role": "user", "content":  user_question})
+    
+    response = st.session_state.conversation({
+        "question": user_question
+    })
+    
     # incase to log the responses
     # st.write(response)
-    st.session_state.chat_history = response["chat_history"]
+    st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
     reversed_chat_history = st.session_state.chat_history[::-1]
 
-    for i, chat in enumerate(reversed_chat_history):
-        if i % 2 == 0:
+    for i, chat in enumerate(reversed_chat_history): 
+        if chat['role'] == "assistant":
             # Bot response
-            message(chat.content, is_user=False)
+            message(chat['content'], is_user=False)
         else:
             # User questions
-            message(chat.content, is_user=True)
+            message(chat['content'], is_user=True)
 
 
 def main():
