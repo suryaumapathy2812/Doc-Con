@@ -67,7 +67,6 @@ def handle_user_question(user_question):
         st.session_state.chat_history = []
         
     # Update the chat history with the user's new question
-    st.session_state.chat_history.append({"role": "system", "content": "You started a new conversation"})
     st.session_state.chat_history.append({"role": "user", "content":  user_question})
     
     response = st.session_state.conversation({
@@ -81,12 +80,14 @@ def handle_user_question(user_question):
     reversed_chat_history = st.session_state.chat_history[::-1]
 
     for i, chat in enumerate(reversed_chat_history): 
+        is_user = chat['role'] == 'user'
+        
         if chat['role'] == "assistant":
             # Bot response
-            message(chat['content'], is_user=False)
+            message(chat['content'], is_user=is_user, key=f"chat_message_{i}")
         else:
             # User questions
-            message(chat['content'], is_user=True)
+            message(chat['content'], is_user=is_user, key=f"chat_message_{i}")
 
 
 def main():
