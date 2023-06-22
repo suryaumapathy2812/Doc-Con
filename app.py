@@ -99,7 +99,7 @@ def main():
         st.session_state.conversation = None
 
     st.header("Chat with PDF :books:")
-    user_question = st.text_input("Ask any question about Java 8")
+    user_question = st.text_input("Ask any question based on the content from the document you just uploaded")
     # user_question = st_ace(language="markdown",show_gutter=False, theme="twilight", keybinding="vscode")
 
     if user_question:
