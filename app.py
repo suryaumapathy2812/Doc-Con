@@ -1,5 +1,3 @@
-# Reference
-# https://www.youtube.com/watch?v=dXxQ0LR-3Hg
 import os
 import streamlit as st
 from streamlit_ace import st_ace
